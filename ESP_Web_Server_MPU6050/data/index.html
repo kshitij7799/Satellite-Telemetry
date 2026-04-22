@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FunSat (satellite telemetry)</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<header class="header" style="position:relative;">
+  <div class="header-left">
+    <img src="labonkit_logo.png" alt="LabonKit Logo" class="header-logo">
+  </div>
+  <h1 style="display:flex; flex-direction:column; align-items:center; gap:2px; margin:0; position:absolute; left:50%; transform:translateX(-50%);">
+    <span>FunSat</span>
+    <span style="font-weight:400; font-size:0.75rem; color:#64748b; letter-spacing:1px;">satellite telemetry</span>
+  </h1>
+  <div class="status"><span class="dot"></span> <span id="statusText">Disconnected</span></div>
+</header>
+
+<div class="main">
+
+  <div class="left-col">
+
+    <div class="card">
+      <div class="card-title">GYROSCOPE (°/s)</div>
+      <div class="xyz-grid">
+        <div class="xyz-box"><label>X</label><p id="gyroX">0.00</p></div>
+        <div class="xyz-box"><label>Y</label><p id="gyroY">0.00</p></div>
+        <div class="xyz-box"><label>Z</label><p id="gyroZ">0.00</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ACCELEROMETER (m/s²)</div>
+      <div class="xyz-grid">
+        <div class="xyz-box"><label>X</label><p id="accX">0.00</p></div>
+        <div class="xyz-box"><label>Y</label><p id="accY">0.00</p></div>
+        <div class="xyz-box"><label>Z</label><p id="accZ">0.00</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">MAGNETOMETER (µT) - SIMULATED</div>
+      <div class="xyz-grid">
+        <div class="xyz-box"><label>X</label><p id="magX">0.00</p></div>
+        <div class="xyz-box"><label>Y</label><p id="magY">0.00</p></div>
+        <div class="xyz-box"><label>Z</label><p id="magZ">0.00</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ENVIRONMENT</div>
+      <div class="env-row"><label>Temperature</label><p id="temp">0.0°C</p></div>
+      <div class="env-row"><label>Pressure</label><p id="pressure">0.0 hPa</p></div>
+      <div class="env-row"><label>Luminosity</label><p id="luminosity">0 lux</p></div>
+    </div>
+
+  </div>
+
+  <div class="center-col">
+    <div class="card center-card">
+      <div class="card-title">SATELLITE ATTITUDE</div>
+      <div id="satellite3D"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
