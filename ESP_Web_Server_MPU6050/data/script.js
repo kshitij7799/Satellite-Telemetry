@@ -139,9 +139,9 @@ function init() {
 function animate(){
   requestAnimationFrame(animate);
   if(satellite){
-    satellite.rotation.x = rotY;
-    satellite.rotation.y = rotZ;
-    satellite.rotation.z = rotX;
+    satellite.rotation.x = rotX;
+    satellite.rotation.y = rotY;
+    satellite.rotation.z = rotZ;
   }
   renderer.render(scene,camera);
 }
@@ -156,21 +156,17 @@ window.addEventListener("resize",()=>{
   }
 });
 
-/****************** UPDATE SIMULATED SENSORS ******************/
-function updateSimulatedSensors(gyroX, gyroY, gyroZ) {
-  // Simulate magnetometer affected by rotation
+/****************** UPDATE SIMULATED MAGNETOMETER ******************/
+// Magnetometer is intentionally simulated (no real magnetometer on this board),
+// derived from the real gyro readings so it still reacts to movement.
+function updateSimulatedMagnetometer(gyroX, gyroY, gyroZ) {
   magX = 45.0 + gyroX * 0.5 + Math.sin(rotZ) * 10;
   magY = -12.0 + gyroY * 0.5 + Math.cos(rotZ) * 8;
   magZ = 30.0 + gyroZ * 0.3 + Math.sin(rotX) * 6;
-  
+
   document.getElementById("magX").textContent = magX.toFixed(2);
   document.getElementById("magY").textContent = magY.toFixed(2);
   document.getElementById("magZ").textContent = magZ.toFixed(2);
-  
-  // Simulate luminosity affected by orientation (solar panels facing sun)
-  const sunAlignment = Math.cos(rotY) * Math.cos(rotX);
-  luminosity = Math.max(0, Math.floor(50000 + sunAlignment * 30000 + Math.abs(gyroZ) * 100));
-  document.getElementById("luminosity").textContent = luminosity + " lux";
 }
 
 /****************** SSE SENSOR EVENTS ******************/
@@ -221,8 +217,8 @@ function setupSensorEventListener(){
     rotY += gy*(Math.PI/180)*dt;
     rotZ += gz*(Math.PI/180)*dt;
     
-    // Update simulated sensors based on gyro
-    updateSimulatedSensors(gx, gy, gz);
+    // Update simulated magnetometer based on gyro (no real magnetometer on this board)
+    updateSimulatedMagnetometer(gx, gy, gz);
   });
 
   // Accelerometer readings
@@ -243,6 +239,13 @@ function setupSensorEventListener(){
   source.addEventListener("pressure_reading",(e)=>{
     const val = parseFloat(e.data);
     document.getElementById("pressure").textContent = isNaN(val) ? "0.0 hPa" : val.toFixed(1)+" hPa";
+  });
+
+  // Luminosity reading (real sensor data from ESP32, e.g. BH1750/LDR)
+  source.addEventListener("luminosity_reading",(e)=>{
+    const val = parseFloat(e.data);
+    luminosity = isNaN(val) ? 0 : val;
+    document.getElementById("luminosity").textContent = (isNaN(val) ? 0 : Math.round(val)) + " lux";
   });
 }
 
