@@ -2,8 +2,30 @@ let scene, camera, renderer, satellite;
 let rotX = 0, rotY = 0, rotZ = 0;
 let lastTime = performance.now();
 
-// Simulated magnetometer and luminosity based on gyro
-let magX = 45.0, magY = -12.0, magZ = 30.0;
+/****************** AXIS CALIBRATION ******************
+ * The MPU6050's X/Y/Z axes depend on how the sensor is physically
+ * mounted inside the satellite, so there's no universal "correct"
+ * mapping to the 3D model's axes. Use this block to calibrate it:
+ *
+ * 1. Flash the firmware, open the dashboard, and slowly rotate the
+ *    satellite around ONE axis at a time (e.g. spin it flat, like a yaw).
+ * 2. Watch which axis the 3D model rotates around.
+ *    - If it rotates around the wrong axis, change which key
+ *      (x/y/z) that gyro axis maps to below.
+ *    - If it rotates the right way but backwards, flip the matching
+ *      invert flag to true.
+ * 3. Repeat for the other two axes.
+ *
+ * Defaults below match the model's previous behavior (gyroX -> model Z,
+ * gyroY -> model X, gyroZ -> model Y).
+ */
+const AXIS_MAP = {
+  gyroX: 'z',
+  gyroY: 'x',
+  gyroZ: 'y',
+  invert: { gyroX: false, gyroY: false, gyroZ: false }
+};
+
 let luminosity = 50000;
 
 /****************** METALLIC SOLAR PANEL TEXTURE ******************/
@@ -139,9 +161,13 @@ function init() {
 function animate(){
   requestAnimationFrame(animate);
   if(satellite){
-    satellite.rotation.x = rotX;
-    satellite.rotation.y = rotY;
-    satellite.rotation.z = rotZ;
+    const gx = AXIS_MAP.invert.gyroX ? -rotX : rotX;
+    const gy = AXIS_MAP.invert.gyroY ? -rotY : rotY;
+    const gz = AXIS_MAP.invert.gyroZ ? -rotZ : rotZ;
+
+    satellite.rotation[AXIS_MAP.gyroX] = gx;
+    satellite.rotation[AXIS_MAP.gyroY] = gy;
+    satellite.rotation[AXIS_MAP.gyroZ] = gz;
   }
   renderer.render(scene,camera);
 }
@@ -155,19 +181,6 @@ window.addEventListener("resize",()=>{
     renderer.setSize(container.clientWidth,container.clientHeight);
   }
 });
-
-/****************** UPDATE SIMULATED MAGNETOMETER ******************/
-// Magnetometer is intentionally simulated (no real magnetometer on this board),
-// derived from the real gyro readings so it still reacts to movement.
-function updateSimulatedMagnetometer(gyroX, gyroY, gyroZ) {
-  magX = 45.0 + gyroX * 0.5 + Math.sin(rotZ) * 10;
-  magY = -12.0 + gyroY * 0.5 + Math.cos(rotZ) * 8;
-  magZ = 30.0 + gyroZ * 0.3 + Math.sin(rotX) * 6;
-
-  document.getElementById("magX").textContent = magX.toFixed(2);
-  document.getElementById("magY").textContent = magY.toFixed(2);
-  document.getElementById("magZ").textContent = magZ.toFixed(2);
-}
 
 /****************** SSE SENSOR EVENTS ******************/
 function setupSensorEventListener(){
@@ -216,9 +229,14 @@ function setupSensorEventListener(){
     rotX += gx*(Math.PI/180)*dt;
     rotY += gy*(Math.PI/180)*dt;
     rotZ += gz*(Math.PI/180)*dt;
-    
-    // Update simulated magnetometer based on gyro (no real magnetometer on this board)
-    updateSimulatedMagnetometer(gx, gy, gz);
+  });
+
+  // Magnetometer readings (real sensor data - HMC5883L or QMC5883L, auto-detected on the ESP32)
+  source.addEventListener("magnetometer_readings",(e)=>{
+    const obj = JSON.parse(e.data);
+    document.getElementById("magX").textContent = (parseFloat(obj.magX) || 0).toFixed(2);
+    document.getElementById("magY").textContent = (parseFloat(obj.magY) || 0).toFixed(2);
+    document.getElementById("magZ").textContent = (parseFloat(obj.magZ) || 0).toFixed(2);
   });
 
   // Accelerometer readings
